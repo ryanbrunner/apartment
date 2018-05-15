@@ -76,7 +76,7 @@ module Apartment
         end
 
         # Now we can safely switch on database
-        connection_switch!(config, without_keys: [:schema_search_path])
+        Apartment.establish_connection(config.reject{|k,_| k == :schema_search_path})
 
         schema = first_schema(config[:schema_search_path]) if config[:schema_search_path]
 

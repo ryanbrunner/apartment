@@ -144,7 +144,7 @@ module Apartment
         config.merge!(name: connection_specification_name(config))
 
         Rails.logger.info("Checking whether I should switch to #{config[:name]}")
-        byebug
+
         unless Apartment.connection_handler.retrieve_connection_pool(config[:name])
           Rails.logger.info("I should! Connecting..")
           Apartment.connection_handler.establish_connection(config)
