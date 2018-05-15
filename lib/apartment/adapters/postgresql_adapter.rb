@@ -62,10 +62,21 @@ module Apartment
       end
 
       def create_tenant!(config)
+        current_config = config_for(@current)
+        difference = config.select{ |k, v| current_config[k] != v }
+
+        # Switch on host only when creating tenant
+        if difference[:host]
+          connection_switch!(config, without_keys: [:database, :schema_search_path])
+        end
+
         unless database_exists?(config[:database])
           Apartment.connection.create_database(config[:database], config)
           connection_switch!(config, without_keys: [:schema_search_path])
         end
+
+        # Now we can safely switch on database
+        connection_switch!(config, without_keys: [:schema_search_path])
 
         schema = first_schema(config[:schema_search_path]) if config[:schema_search_path]
 

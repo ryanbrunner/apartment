@@ -34,13 +34,18 @@ module Apartment
               connection_switch(config, without_keys: [:database, :schema_search_path])
             end
 
+            Rails.logger.info("Creating tenant..")
             create_tenant!(config)
+            Rails.logger.info("Switching to #{config}")
             simple_switch(config)
             @current = tenant
 
+            Rails.logger.info("Importing database schema to #{current}")
             import_database_schema
+            Rails.logger.info("Seeding to #{current}")
             seed_data if Apartment.seed_after_create
 
+            Rails.logger.info("Yielding")
             yield if block_given?
           ensure
             switch!(previous_tenant) rescue reset
@@ -132,13 +137,16 @@ module Apartment
       end
 
       def connection_switch!(config, without_keys: [])
-        config = config.dup.tap do |c|
-          c.reject{ |k, _| without_keys.include?(k) }
+        config = config.dup.reject do |k, _|
+          without_keys.include?(k)
         end
 
         config.merge!(name: connection_specification_name(config))
 
+        Rails.logger.info("Checking whether I should switch to #{config[:name]}")
+        byebug
         unless Apartment.connection_handler.retrieve_connection_pool(config[:name])
+          Rails.logger.info("I should! Connecting..")
           Apartment.connection_handler.establish_connection(config)
         end
 
